@@ -3,7 +3,7 @@ update_reminders: virtualenv
 
 deploy: test
 	gcloud functions deploy email_cloud_function \
-	 --runtime python37 \
+	 --runtime python312 \
 	 --retry \
 	 --trigger-topic reminders-topic \
 	 --project $(shell cat .gcp_project_id) \
