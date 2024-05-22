@@ -49,10 +49,14 @@ def parse_schedule(schedule: str) -> (str, dict, typing.Optional[int]):
         return cron, {'start': start_date, 'frequency': days, 'unit': 'day'}, None
 
     if schedule.startswith('on'):
-        match = re.match(r'on\s+(?P<ordinal>[a-zA-Z1-5]+)\s+(?P<dayofweek>[a-zA-Z]{3,4})\s+in\s+(?P<month>[a-zA-Z]{3,4})\s+at\s+(?P<hours>[0-9]{1,2}):(?P<minutes>[0-9]{2})', schedule)
+        match = re.match(r'on\s+(?P<ordinal>[a-zA-Z1-5]+)\s+(?P<dayofweek>[a-zA-Z]{3,4})\s+in\s+(?P<month>[a-zA-Z]{3,4}|every month)\s+at\s+(?P<hours>[0-9]{1,2}):(?P<minutes>[0-9]{2})', schedule)
         ordinal = match.group('ordinal')
         day_of_week = match.group('dayofweek').lower()
-        month = parser.parse(match.group('month')).month
+        month = match.group('month')
+        if month == "every month":
+            month = "*"
+        else:
+            month = parser.parse(month).month
         hours = int(match.group('hours'))
         minutes = int(match.group('minutes'))
 

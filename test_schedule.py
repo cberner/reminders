@@ -34,6 +34,11 @@ class ScheduleTestCase(unittest.TestCase):
         self.assertEqual(schedule, {})
         self.assertEqual(day_of_week, 3)
 
+        cron, schedule, day_of_week = parse_schedule("on 2nd Tues in every month at 1:00")
+        self.assertEqual(cron, "0 1 8-14 * *")
+        self.assertEqual(schedule, {})
+        self.assertEqual(day_of_week, 2)
+
 
 if __name__ == '__main__':
     unittest.main()
