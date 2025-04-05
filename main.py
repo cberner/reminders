@@ -5,6 +5,7 @@ import os
 from dateutil import parser
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+from croniter import croniter
 
 
 RETRY_TIMEOUT = 24*60*60
@@ -41,6 +42,17 @@ def email_cloud_function(event, context):
         event_date = parser.parse(context.timestamp).date()
         if not check_ndays_schedule(start_date, event_date, schedule['frequency']):
             return "Skipped"
+    
+    if 'cron_schedule' in event:
+        event_timestamp = parser.parse(context.timestamp)
+        cron_schedule = event['cron_schedule']
+        normalized_timestamp = event_timestamp.replace(second=0, microsecond=0)
+        cron_iter = croniter(cron_schedule, normalized_timestamp - datetime.timedelta(minutes=1))
+        next_execution = cron_iter.get_next(datetime.datetime)
+
+        if normalized_timestamp != next_execution:
+            print(f"WARNING: Event timing does not match cron schedule. Event time: {event_timestamp}, Closest expected time from cron: {next_execution}, Cron schedule: {cron_schedule}")
+            return "BadScheduling"
 
     event_timestamp = parser.parse(context.timestamp)
     event_age = (datetime.datetime.now(datetime.timezone.utc) - event_timestamp).total_seconds()
