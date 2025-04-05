@@ -12,6 +12,7 @@ def check_cron(schedule: str, current: datetime.datetime) -> bool:
     Returns:
         True if the schedule should run at the given time, False otherwise
     """
+    current = current.replace(second=0, microsecond=0)
     parts = schedule.split()
     if len(parts) != 5:
         raise ValueError(f"Invalid cron schedule: {schedule}. Expected 5 parts.")
@@ -30,16 +31,21 @@ def check_cron(schedule: str, current: datetime.datetime) -> bool:
     if not _check_field(month, current.month, 1, 12):
         return False
     
-    current_weekday = current.weekday()
-    cron_weekday = (current_weekday + 1) % 7
-    
-    if day_of_week == '0' and current_weekday == 6:
-        pass  # Sunday matches
-    elif day_of_week == '7' and current_weekday == 6:
-        pass  # Sunday matches
-    elif not _check_field(day_of_week, cron_weekday, 0, 6):
-        return False
-    
+    if day_of_week == '*':
+        pass  # Wildcard matches any day
+    elif day_of_week.upper() in ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']:
+        day_map = {
+            'MON': 0,
+            'TUE': 1,
+            'WED': 2,
+            'THU': 3,
+            'FRI': 4,
+            'SAT': 5,
+            'SUN': 6,
+        }
+        if current.weekday() != day_map[day_of_week.upper()]:
+            return False
+
     return True
 
 
