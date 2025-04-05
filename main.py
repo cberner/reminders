@@ -46,10 +46,13 @@ def email_cloud_function(event, context):
     if 'cron_schedule' in event:
         event_timestamp = parser.parse(context.timestamp)
         cron_schedule = event['cron_schedule']
-        cron_iter = croniter(cron_schedule, event_timestamp.replace(second=0, microsecond=0))
-        prev_execution = cron_iter.get_prev(datetime.datetime)
-        if (event_timestamp - prev_execution).total_seconds() > 60:  # Allow 1 minute tolerance
-            print(f"WARNING: Event timing does not match cron schedule. Event time: {event_timestamp}, Expected time from cron: {prev_execution}, Cron schedule: {cron_schedule}")
+        normalized_timestamp = event_timestamp.replace(second=0, microsecond=0)
+        cron_iter = croniter(cron_schedule, normalized_timestamp - datetime.timedelta(minutes=1))
+        next_execution = cron_iter.get_next(datetime.datetime)
+
+        if normalized_timestamp != next_execution:
+            print(f"WARNING: Event timing does not match cron schedule. Event time: {event_timestamp}, Closest expected time from cron: {next_execution}, Cron schedule: {cron_schedule}")
+            return "BadScheduling"
 
     event_timestamp = parser.parse(context.timestamp)
     event_age = (datetime.datetime.now(datetime.timezone.utc) - event_timestamp).total_seconds()
