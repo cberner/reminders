@@ -105,7 +105,8 @@ def read_reminders(client: CloudSchedulerClient) -> typing.MutableMapping[str, J
                 payload = {'from': config['from'],
                            'to': recipient['to'],
                            'subject': reminder['subject'],
-                           'html_content': reminder.get('html_content')}
+                           'html_content': reminder.get('html_content'),
+                           'body': reminder.get('body')}
                 if extra_schedule:
                     payload['schedule'] = extra_schedule
                 if day_of_week is not None:

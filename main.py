@@ -48,11 +48,12 @@ def email_cloud_function(event, context):
         print('Dropped event {} ({}sec old)'.format(context.event_id, event_age))
         return 'Timeout'
 
+    body_content = event.get('body') or event.get('html_content') or ' '  # SendGrid does not support empty body
     message = Mail(
         from_email=event['from'],
         to_emails=event['to'],
         subject=event['subject'],
-        html_content=event['html_content'] or ' ')  # SendGrid does not support empty body
+        html_content=body_content)
 
     client = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
     response = client.send(message)
