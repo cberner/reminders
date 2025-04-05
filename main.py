@@ -29,6 +29,26 @@ def email_cloud_function(event, context):
     # Messages in pubsub are base64 encoded. Also support events with the keys directly in them, to make testing easier
     if 'data' in event:
         event = json.loads(base64.b64decode(event['data']).decode('utf-8'))
+        results = []
+        for reminder in event['reminders']:
+            result = process_reminder(reminder, context)
+            results.append(result)
+        return results
+    else:
+        print("WARNING! received empty event")
+
+
+def process_reminder(event, context):
+    if 'cron_schedule' in event:
+        cron_schedule = event['cron_schedule']
+        event_timestamp = parser.parse(context.timestamp)
+        normalized_timestamp = event_timestamp.replace(second=0, microsecond=0)
+        cron_iter = croniter(cron_schedule, normalized_timestamp - datetime.timedelta(minutes=1))
+        next_execution = cron_iter.get_next(datetime.datetime)
+
+        if normalized_timestamp != next_execution:
+            print(f"Skipping {event['subject']}: next execution at {next_execution}")
+            return "Skipped"
 
     if 'required_day_of_week' in event:
         event_date = parser.parse(context.timestamp).date()
@@ -42,17 +62,6 @@ def email_cloud_function(event, context):
         event_date = parser.parse(context.timestamp).date()
         if not check_ndays_schedule(start_date, event_date, schedule['frequency']):
             return "Skipped"
-    
-    if 'cron_schedule' in event:
-        event_timestamp = parser.parse(context.timestamp)
-        cron_schedule = event['cron_schedule']
-        normalized_timestamp = event_timestamp.replace(second=0, microsecond=0)
-        cron_iter = croniter(cron_schedule, normalized_timestamp - datetime.timedelta(minutes=1))
-        next_execution = cron_iter.get_next(datetime.datetime)
-
-        if normalized_timestamp != next_execution:
-            print(f"WARNING: Event timing does not match cron schedule. Event time: {event_timestamp}, Closest expected time from cron: {next_execution}, Cron schedule: {cron_schedule}")
-            return "BadScheduling"
 
     event_timestamp = parser.parse(context.timestamp)
     event_age = (datetime.datetime.now(datetime.timezone.utc) - event_timestamp).total_seconds()

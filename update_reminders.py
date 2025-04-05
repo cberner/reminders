@@ -15,25 +15,6 @@ REGION = os.environ['GCP_REGION']
 TOPIC = 'reminders-topic'
 
 
-def safe_job_name(to: str, subject: str, hash: str, client: CloudSchedulerClient) -> str:
-    base = f'projects/{PROJECT}/locations/{REGION}/jobs/'
-    limit = 500 - len(base) # reserve space for base of id
-    limit -= (len(hash) + 1) # reserve space for '-{hash}'
-
-    job_name = to
-    limit -= len(to)
-
-    job_name += '-'
-    limit -= 1
-
-    job_name += subject[:limit]
-    job_name += ('-' + hash)
-
-    job_name = re.sub('[^a-zA-Z0-9]', '-', job_name)
-
-    return client.job_path(PROJECT, REGION, job_name)
-
-
 def parse_schedule(schedule: str) -> (str, dict, typing.Optional[int]):
     if schedule.startswith('starting'):
         match = re.match(r'starting\s+(?P<start>.+)\s+every\s+(?P<days>[0-9]{1,3})\s+days\s+at\s+(?P<hours>[0-9]{1,2}):(?P<minutes>[0-9]{2})', schedule)
@@ -95,8 +76,10 @@ def parse_schedule(schedule: str) -> (str, dict, typing.Optional[int]):
     return schedule, {}, None
 
 
-def read_reminders(client: CloudSchedulerClient) -> typing.MutableMapping[str, Job]:
+def read_reminders(client: CloudSchedulerClient) -> Job:
     reminder_jobs = {}
+    all_payloads = []
+    
     with open('reminders.yaml', 'r') as f:
         config = yaml.safe_load(f)
         for recipient in config['recipients']:
@@ -111,47 +94,37 @@ def read_reminders(client: CloudSchedulerClient) -> typing.MutableMapping[str, J
                     payload['schedule'] = extra_schedule
                 if day_of_week is not None:
                     payload['required_day_of_week'] = day_of_week
-                data = json.dumps(payload).encode('utf-8')
-                target = PubsubTarget(topic_name=f'projects/{PROJECT}/topics/{TOPIC}', data=data)
-                hasher = hashlib.sha1()
-                hasher.update(data)
-                hasher.update(cron.encode('utf-8'))
-                hash = hasher.hexdigest()
-                job_name = safe_job_name(recipient['to'], reminder['subject'], hash, client)
-                job = Job(
-                    name=job_name,
-                    pubsub_target=target,
-                    schedule=cron,
-                    time_zone=config['timezone'])
-                reminder_jobs[job_name] = job
-
-    return reminder_jobs
+                all_payloads.append(payload)
+    
+    combined_payload = {'reminders': all_payloads}
+    data = json.dumps(combined_payload).encode('utf-8')
+    target = PubsubTarget(topic_name=f'projects/{PROJECT}/topics/{TOPIC}', data=data)
+    
+    hasher = hashlib.sha1()
+    hasher.update(data)
+    hash = hasher.hexdigest()
+    
+    job_name = client.job_path(PROJECT, REGION, f'combined-reminders-{hash[:16]}')
+    return Job(
+        name=job_name,
+        pubsub_target=target,
+        schedule='* * * * *',  # Run every minute
+        time_zone=config['timezone'])
 
 
 if __name__ == '__main__':
     client = CloudSchedulerClient()
     parent = client.location_path(PROJECT, REGION)
-    reminder_jobs = read_reminders(client)
+    reminder_job = read_reminders(client)
 
-    deleted = 0
-    unchanged = 0
     for reminder in client.list_jobs(parent):
-        if reminder.name in reminder_jobs:
-            del reminder_jobs[reminder.name]
-            unchanged += 1
-        else:
-            client.delete_job(reminder.name)
-            deleted += 1
-    print("{} unchanged reminders".format(unchanged))
-    print("Deleted {} reminders".format(deleted))
+        client.delete_job(reminder.name)
+        print("Deleted {}".format(reminder.name))
 
-    created = 0
-    for reminder in reminder_jobs.values():
-        try:
-            client.create_job(parent, reminder)
-        except Exception as e:
-            print(reminder)
-            print(e)
-        created += 1
-    print(f"Created {created} reminders")
+    try:
+        client.create_job(parent, reminder_job)
+        print(f"Created {reminder_job.name}")
+    except Exception as e:
+        print(reminder_job)
+        print(e)
 
