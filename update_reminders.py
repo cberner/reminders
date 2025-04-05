@@ -65,7 +65,7 @@ def parse_schedule(schedule: str) -> (str, dict, typing.Optional[int]):
         elif ordinal == '2nd':
             day_range = '8-14'
         elif ordinal == '3rd':
-            day_range = '9-21'
+            day_range = '15-21'
         elif ordinal == '4th':
             day_range = '22-28'
         else:
