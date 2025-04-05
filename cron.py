@@ -1,0 +1,68 @@
+import datetime
+
+
+def check_cron(schedule: str, current: datetime.datetime) -> bool:
+    """
+    Check if a cron schedule should run at the given time.
+    
+    Args:
+        schedule: A cron schedule string in the format "{minute} {hour} {day of month} {month of year} {day of week}"
+        current: The datetime to check against the schedule
+        
+    Returns:
+        True if the schedule should run at the given time, False otherwise
+    """
+    parts = schedule.split()
+    if len(parts) != 5:
+        raise ValueError(f"Invalid cron schedule: {schedule}. Expected 5 parts.")
+    
+    minute, hour, day_of_month, month, day_of_week = parts
+    
+    if not _check_field(minute, current.minute, 0, 59):
+        return False
+    
+    if not _check_field(hour, current.hour, 0, 23):
+        return False
+    
+    if not _check_field(day_of_month, current.day, 1, 31):
+        return False
+    
+    if not _check_field(month, current.month, 1, 12):
+        return False
+    
+    current_weekday = current.weekday()
+    cron_weekday = (current_weekday + 1) % 7
+    
+    if day_of_week == '0' and current_weekday == 6:
+        pass  # Sunday matches
+    elif day_of_week == '7' and current_weekday == 6:
+        pass  # Sunday matches
+    elif not _check_field(day_of_week, cron_weekday, 0, 6):
+        return False
+    
+    return True
+
+
+def _check_field(field: str, current_value: int, min_value: int, max_value: int) -> bool:
+    """
+    Check if a field in the cron schedule matches the current value.
+    
+    Args:
+        field: The field value from the cron schedule (can be a number or *)
+        current_value: The current value to check against
+        min_value: The minimum valid value for this field
+        max_value: The maximum valid value for this field
+        
+    Returns:
+        True if the field matches the current value, False otherwise
+    """
+    if field == '*':
+        return True
+    
+    try:
+        field_value = int(field)
+        if field_value < min_value or field_value > max_value:
+            raise ValueError(f"Field value {field_value} is outside valid range {min_value}-{max_value}")
+        return field_value == current_value
+    except ValueError:
+        raise ValueError(f"Invalid field value: {field}. Expected a number or *.")
