@@ -5,7 +5,7 @@ import os
 from dateutil import parser
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-from croniter import croniter
+from cron import check_cron
 
 
 RETRY_TIMEOUT = 24*60*60
@@ -43,10 +43,7 @@ def process_reminder(event, context):
         cron_schedule = event['cron_schedule']
         event_timestamp = parser.parse(context.timestamp)
         normalized_timestamp = event_timestamp.replace(second=0, microsecond=0)
-        cron_iter = croniter(cron_schedule, normalized_timestamp - datetime.timedelta(minutes=1))
-        next_execution = cron_iter.get_next(datetime.datetime)
-
-        if normalized_timestamp != next_execution:
+        if not check_cron(cron_schedule, normalized_timestamp):
             # for debugging
             # print(f"Skipping {event['subject']}: next execution at {next_execution}. Now: {event_timestamp}")
             return "Skipped"
