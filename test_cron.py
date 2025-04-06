@@ -154,6 +154,18 @@ class CronTestCase(unittest.TestCase):
         
         dt = datetime.datetime(2025, 7, 1, 5, 0, 0)  # July 1st 2025 at 5:00 AM
         self.assertTrue(check_cron("0 5 1 */6 *", dt))
+        
+    def test_day_of_week_numeric(self):
+        dt = datetime.datetime(2025, 1, 1, 0, 0, 0)
+        self.assertFalse(check_cron("0 0 * * 0", dt))  # Sunday
+        self.assertFalse(check_cron("0 0 * * 1", dt))  # Monday
+        self.assertFalse(check_cron("0 0 * * 2", dt))  # Tuesday
+        self.assertTrue(check_cron("0 0 * * 3", dt))   # Wednesday
+        self.assertFalse(check_cron("0 0 * * 4", dt))  # Thursday
+        self.assertFalse(check_cron("0 0 * * 5", dt))  # Friday
+        self.assertFalse(check_cron("0 0 * * 6", dt))  # Saturday
+        
+        self.assertFalse(check_cron("0 0 * * */2", dt))  # Every 2 days, Wednesday is day 3, (3-0)%2 = 1, so false
 
 
 if __name__ == '__main__':

@@ -47,6 +47,10 @@ def check_cron(schedule: str, current: datetime.datetime) -> bool:
         }
         if current.weekday() != day_map[day_of_week.upper()]:
             return False
+    else:
+        cron_weekday = (current.weekday() + 1) % 7
+        if not _check_field(day_of_week, cron_weekday, 0, 6, enable_slash=True):
+            return False
 
     return True
 
@@ -71,7 +75,19 @@ def _check_field(field: str, current_value: int, min_value: int, max_value: int,
     if ',' in field:
         values = field.split(',')
         for value in values:
-            if _check_field(value, current_value, min_value, max_value, enable_slash):
+            if value.upper() in ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] and min_value == 0 and max_value == 6:
+                day_map = {
+                    'MON': 1,
+                    'TUE': 2,
+                    'WED': 3,
+                    'THU': 4,
+                    'FRI': 5,
+                    'SAT': 6,
+                    'SUN': 0,
+                }
+                if current_value == day_map[value.upper()]:
+                    return True
+            elif _check_field(value, current_value, min_value, max_value, enable_slash):
                 return True
         return False
     
@@ -84,10 +100,23 @@ def _check_field(field: str, current_value: int, min_value: int, max_value: int,
         except ValueError as e:
             raise ValueError(f"Invalid slash notation: {field}. {str(e)}")
     
+    if '-' in field:
+        try:
+            start, end = field.split('-')
+            start_value = int(start)
+            end_value = int(end)
+            if start_value < min_value or start_value > max_value:
+                raise ValueError(f"Range start value {start_value} is outside valid range {min_value}-{max_value}")
+            if end_value < min_value or end_value > max_value:
+                raise ValueError(f"Range end value {end_value} is outside valid range {min_value}-{max_value}")
+            return start_value <= current_value <= end_value
+        except ValueError as e:
+            raise ValueError(f"Invalid range notation: {field}. {str(e)}")
+    
     try:
         field_value = int(field)
         if field_value < min_value or field_value > max_value:
             raise ValueError(f"Field value {field_value} is outside valid range {min_value}-{max_value}")
         return field_value == current_value
     except ValueError:
-        raise ValueError(f"Invalid field value: {field}. Expected a number or *.")
+        raise ValueError(f"Invalid field value: {field}. Expected a number, range, or *.")
