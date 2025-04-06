@@ -154,6 +154,20 @@ class CronTestCase(unittest.TestCase):
         
         dt = datetime.datetime(2025, 7, 1, 5, 0, 0)  # July 1st 2025 at 5:00 AM
         self.assertTrue(check_cron("0 5 1 */6 *", dt))
+    
+    def test_day_of_week_rejects_numbers(self):
+        dt = datetime.datetime(2025, 4, 5, 10, 0, 0)  # Saturday
+        
+        with self.assertRaises(ValueError) as context:
+            check_cron("0 10 5 4 5", dt)  # 5 = Friday in some systems, but should be rejected
+        self.assertIn("Day of week must be a three-letter abbreviation", str(context.exception))
+        
+        with self.assertRaises(ValueError) as context:
+            check_cron("0 10 5 4 6", dt)  # 6 = Saturday in some systems, but should be rejected
+        self.assertIn("Day of week must be a three-letter abbreviation", str(context.exception))
+        
+        dt = datetime.datetime(2025, 4, 5, 10, 0, 0)  # Saturday
+        self.assertTrue(check_cron("0 10 5 4 SAT", dt))  # SAT should be accepted
 
 
 if __name__ == '__main__':
