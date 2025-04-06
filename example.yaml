@@ -16,6 +16,8 @@ recipients:
         schedule: 0 5 15 */4 *
       - subject: Every other month
         schedule: 0 5 15 */4 *
+      - subject: First six months of the year
+        schedule: 0 5 15 1-6 *
       - subject: Multiple days of the week
         schedule: 0 5 * * THU,FRI,SAT,SUN
       - subject: Multiple days
