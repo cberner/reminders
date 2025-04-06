@@ -47,7 +47,7 @@ def process_reminder(event, context):
         next_execution = cron_iter.get_next(datetime.datetime)
 
         if normalized_timestamp != next_execution:
-            print(f"Skipping {event['subject']}: next execution at {next_execution}")
+            print(f"Skipping {event['subject']}: next execution at {next_execution}. Now: {event_timestamp}")
             return "Skipped"
 
     if 'required_day_of_week' in event:
