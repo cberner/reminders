@@ -7,12 +7,15 @@ def check_cron(schedule: str, current: datetime.datetime) -> bool:
     
     Args:
         schedule: A cron schedule string in the format "{minute} {hour} {day of month} {month of year} {day of week}"
-                 - Each field can be a number, *, comma-separated values (e.g., "1,2,3"), or */n (for minutes and hours only)
-                 - Day of week can also be three-letter abbreviations (e.g., "MON", "TUE")
+                 - Each field can be a number, *, comma-separated values (e.g., "1,2,3"), or */n
+                 - Day of week field only accepts three-letter abbreviations (e.g., "MON", "TUE") or *
         current: The datetime to check against the schedule
         
     Returns:
         True if the schedule should run at the given time, False otherwise
+        
+    Raises:
+        ValueError: If the day of week is a number or not a valid three-letter abbreviation
     """
     current = current.replace(second=0, microsecond=0)
     parts = schedule.split()
@@ -21,37 +24,41 @@ def check_cron(schedule: str, current: datetime.datetime) -> bool:
     
     minute, hour, day_of_month, month, day_of_week = parts
     
-    if not _check_field(minute, current.minute, 0, 59, enable_slash=True):
+    if not _check_field(minute, current.minute, 0, 59):
         return False
     
-    if not _check_field(hour, current.hour, 0, 23, enable_slash=True):
+    if not _check_field(hour, current.hour, 0, 23):
         return False
     
-    if not _check_field(day_of_month, current.day, 1, 31, enable_slash=True):
+    if not _check_field(day_of_month, current.day, 1, 31):
         return False
     
-    if not _check_field(month, current.month, 1, 12, enable_slash=True):
+    if not _check_field(month, current.month, 1, 12):
         return False
-    
-    if day_of_week == '*':
-        pass  # Wildcard matches any day
-    elif day_of_week.upper() in ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']:
+
+    return _check_day_of_week(day_of_week, current.weekday())
+
+
+def _check_day_of_week(schedule: str, current: int) -> bool:
+    if ',' in schedule:
+        for part in schedule.split(','):
+            if _check_day_of_week(part, current):
+                return True
+        return False
+    else:
+        if schedule == '*':
+            return True
         day_map = {
-            'MON': 0,
-            'TUE': 1,
-            'WED': 2,
-            'THU': 3,
-            'FRI': 4,
-            'SAT': 5,
-            'SUN': 6,
+            'MON': 0, 'TUE': 1, 'WED': 2, 'THU': 3,
+            'FRI': 4, 'SAT': 5, 'SUN': 6
         }
-        if current.weekday() != day_map[day_of_week.upper()]:
-            return False
+        if schedule.upper() not in day_map:
+            raise ValueError(f"Day of week must be a three-letter abbreviation (MON, TUE, etc.), got: {schedule}")
 
-    return True
+        return current == day_map[schedule.upper()]
 
 
-def _check_field(field: str, current_value: int, min_value: int, max_value: int, enable_slash: bool = False) -> bool:
+def _check_field(field: str, current_value: int, min_value: int, max_value: int) -> bool:
     """
     Check if a field in the cron schedule matches the current value.
     
@@ -60,7 +67,6 @@ def _check_field(field: str, current_value: int, min_value: int, max_value: int,
         current_value: The current value to check against
         min_value: The minimum valid value for this field
         max_value: The maximum valid value for this field
-        enable_slash: Whether to enable slash notation for this field
         
     Returns:
         True if the field matches the current value, False otherwise
@@ -71,11 +77,11 @@ def _check_field(field: str, current_value: int, min_value: int, max_value: int,
     if ',' in field:
         values = field.split(',')
         for value in values:
-            if _check_field(value, current_value, min_value, max_value, enable_slash):
+            if _check_field(value, current_value, min_value, max_value):
                 return True
         return False
     
-    if field.startswith('*/') and enable_slash:
+    if field.startswith('*/'):
         try:
             divisor = int(field[2:])
             if divisor <= 0:
