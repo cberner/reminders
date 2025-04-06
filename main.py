@@ -57,7 +57,7 @@ def process_reminder(event, context):
         cron_schedule = event['cron_schedule']
         if not check_cron(cron_schedule, normalized_timestamp.replace(tzinfo=None)):
             # for debugging
-            # print(f"Skipping {event['subject']}: next execution at {next_execution}. Now: {event_timestamp}")
+            # print(f"Skipping {event['subject']}: Schedule: {cron_schedule}. Now: {normalized_timestamp}")
             return "Skipped"
 
     if 'required_day_of_week' in event:
