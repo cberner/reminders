@@ -147,6 +147,13 @@ class CronTestCase(unittest.TestCase):
             
         with self.assertRaises(ValueError):
             check_cron("*/ten 10 5 4 *", dt)  # Non-numeric divisor
+    
+    def test_slash_notation_in_month(self):
+        dt = datetime.datetime(2025, 1, 1, 5, 0, 0)  # January 1st 2025 at 5:00 AM
+        self.assertTrue(check_cron("0 5 1 */6 *", dt))
+        
+        dt = datetime.datetime(2025, 7, 1, 5, 0, 0)  # July 1st 2025 at 5:00 AM
+        self.assertTrue(check_cron("0 5 1 */6 *", dt))
 
 
 if __name__ == '__main__':
