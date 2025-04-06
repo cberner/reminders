@@ -1,4 +1,5 @@
 import datetime
+import pytz
 
 
 def check_cron(schedule: str, current: datetime.datetime) -> bool:
@@ -9,7 +10,7 @@ def check_cron(schedule: str, current: datetime.datetime) -> bool:
         schedule: A cron schedule string in the format "{minute} {hour} {day of month} {month of year} {day of week}"
                  - Each field can be a number, *, comma-separated values (e.g., "1,2,3"), or */n
                  - Day of week field only accepts three-letter abbreviations (e.g., "MON", "TUE") or *
-        current: The datetime to check against the schedule
+        current: The datetime to check against the schedule (should be timezone-adjusted before calling this function)
         
     Returns:
         True if the schedule should run at the given time, False otherwise

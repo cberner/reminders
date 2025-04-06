@@ -39,17 +39,28 @@ def email_cloud_function(event, context):
 
 
 def process_reminder(event, context):
+    event_timestamp = parser.parse(context.timestamp)
+    timezone = event.get('timezone')
+    
+    if timezone:
+        import pytz
+        if event_timestamp.tzinfo is not None:
+            event_timestamp = event_timestamp.astimezone(pytz.timezone(timezone))
+        else:
+            event_timestamp = pytz.timezone('UTC').localize(event_timestamp)
+            event_timestamp = event_timestamp.astimezone(pytz.timezone(timezone))
+    
+    normalized_timestamp = event_timestamp.replace(second=0, microsecond=0)
+    event_date = normalized_timestamp.date()
+    
     if 'cron_schedule' in event:
         cron_schedule = event['cron_schedule']
-        event_timestamp = parser.parse(context.timestamp)
-        normalized_timestamp = event_timestamp.replace(second=0, microsecond=0)
-        if not check_cron(cron_schedule, normalized_timestamp):
+        if not check_cron(cron_schedule, normalized_timestamp.replace(tzinfo=None)):
             # for debugging
             # print(f"Skipping {event['subject']}: next execution at {next_execution}. Now: {event_timestamp}")
             return "Skipped"
 
     if 'required_day_of_week' in event:
-        event_date = parser.parse(context.timestamp).date()
         if not check_day_of_week(event_date, event['required_day_of_week']):
             return "Skipped"
 
@@ -57,7 +68,6 @@ def process_reminder(event, context):
         schedule = event['schedule']
         assert schedule['unit'] == 'day'
         start_date = datetime.date.fromisoformat(schedule['start'])
-        event_date = parser.parse(context.timestamp).date()
         if not check_ndays_schedule(start_date, event_date, schedule['frequency']):
             return "Skipped"
 

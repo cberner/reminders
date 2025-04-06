@@ -1,5 +1,6 @@
 import datetime
 import yaml
+import pytz
 from croniter import croniter
 
 
@@ -12,7 +13,7 @@ def check_with_croniter(cron_schedule, current_time):
     
     Args:
         cron_schedule: A cron schedule string
-        current_time: The datetime to check
+        current_time: The datetime to check (should be timezone-adjusted before calling this function)
         
     Returns:
         True if the schedule should run at the given time, False otherwise
