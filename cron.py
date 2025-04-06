@@ -7,6 +7,8 @@ def check_cron(schedule: str, current: datetime.datetime) -> bool:
     
     Args:
         schedule: A cron schedule string in the format "{minute} {hour} {day of month} {month of year} {day of week}"
+                 - Each field can be a number, *, comma-separated values (e.g., "1,2,3"), or */n (for minutes and hours only)
+                 - Day of week can also be three-letter abbreviations (e.g., "MON", "TUE")
         current: The datetime to check against the schedule
         
     Returns:
@@ -54,7 +56,7 @@ def _check_field(field: str, current_value: int, min_value: int, max_value: int)
     Check if a field in the cron schedule matches the current value.
     
     Args:
-        field: The field value from the cron schedule (can be a number or *)
+        field: The field value from the cron schedule (can be a number or * or comma-separated values or */n)
         current_value: The current value to check against
         min_value: The minimum valid value for this field
         max_value: The maximum valid value for this field
@@ -64,6 +66,23 @@ def _check_field(field: str, current_value: int, min_value: int, max_value: int)
     """
     if field == '*':
         return True
+    
+    if ',' in field:
+        values = field.split(',')
+        for value in values:
+            if _check_field(value, current_value, min_value, max_value):
+                return True
+        return False
+    
+    if field.startswith('*/') and min_value in [0, 1]:  # Only for minutes and hours fields
+        try:
+            divisor = int(field[2:])
+            if divisor <= 0:
+                raise ValueError(f"Divisor in {field} must be positive")
+            adjusted_value = current_value if min_value == 0 else current_value - min_value
+            return adjusted_value % divisor == 0
+        except ValueError as e:
+            raise ValueError(f"Invalid slash notation: {field}. {str(e)}")
     
     try:
         field_value = int(field)
