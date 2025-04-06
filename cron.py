@@ -21,10 +21,10 @@ def check_cron(schedule: str, current: datetime.datetime) -> bool:
     
     minute, hour, day_of_month, month, day_of_week = parts
     
-    if not _check_field(minute, current.minute, 0, 59):
+    if not _check_field(minute, current.minute, 0, 59, enable_slash=True):
         return False
     
-    if not _check_field(hour, current.hour, 0, 23):
+    if not _check_field(hour, current.hour, 0, 23, enable_slash=True):
         return False
     
     if not _check_field(day_of_month, current.day, 1, 31):
@@ -51,7 +51,7 @@ def check_cron(schedule: str, current: datetime.datetime) -> bool:
     return True
 
 
-def _check_field(field: str, current_value: int, min_value: int, max_value: int) -> bool:
+def _check_field(field: str, current_value: int, min_value: int, max_value: int, enable_slash: bool = False) -> bool:
     """
     Check if a field in the cron schedule matches the current value.
     
@@ -60,6 +60,7 @@ def _check_field(field: str, current_value: int, min_value: int, max_value: int)
         current_value: The current value to check against
         min_value: The minimum valid value for this field
         max_value: The maximum valid value for this field
+        enable_slash: Whether to enable slash notation for this field
         
     Returns:
         True if the field matches the current value, False otherwise
@@ -70,11 +71,11 @@ def _check_field(field: str, current_value: int, min_value: int, max_value: int)
     if ',' in field:
         values = field.split(',')
         for value in values:
-            if _check_field(value, current_value, min_value, max_value):
+            if _check_field(value, current_value, min_value, max_value, enable_slash):
                 return True
         return False
     
-    if field.startswith('*/') and min_value in [0, 1]:  # Only for minutes and hours fields
+    if field.startswith('*/') and enable_slash:
         try:
             divisor = int(field[2:])
             if divisor <= 0:
