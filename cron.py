@@ -80,10 +80,7 @@ def _check_field(field: str, current_value: int, min_value: int, max_value: int,
             divisor = int(field[2:])
             if divisor <= 0:
                 raise ValueError(f"Divisor in {field} must be positive")
-            if min_value == 1 and max_value == 12:  # This is true for month field only
-                return (current_value - 1) % divisor == 0
-            else:
-                return current_value % divisor == 0
+            return current_value % divisor == 0
         except ValueError as e:
             raise ValueError(f"Invalid slash notation: {field}. {str(e)}")
     

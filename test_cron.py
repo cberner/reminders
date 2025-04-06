@@ -115,25 +115,28 @@ class CronTestCase(unittest.TestCase):
         self.assertFalse(check_cron("0 0 */5 * *", dt))
     
     def test_slash_operator_month(self):
+        dt = datetime.datetime(2025, 3, 1, 0, 0, 0)  # March 1st
+        self.assertTrue(check_cron("0 0 1 */3 *", dt))
+        
+        dt = datetime.datetime(2025, 6, 1, 0, 0, 0)  # June 1st
+        self.assertTrue(check_cron("0 0 1 */3 *", dt))
+        
+        dt = datetime.datetime(2025, 9, 1, 0, 0, 0)  # September 1st
+        self.assertTrue(check_cron("0 0 1 */3 *", dt))
+        
+        dt = datetime.datetime(2025, 12, 1, 0, 0, 0)  # December 1st
+        self.assertTrue(check_cron("0 0 1 */3 *", dt))
+        
         dt = datetime.datetime(2025, 1, 1, 0, 0, 0)  # January 1st
-        self.assertTrue(check_cron("0 0 1 */3 *", dt))
-        
-        dt = datetime.datetime(2025, 4, 1, 0, 0, 0)  # April 1st
-        self.assertTrue(check_cron("0 0 1 */3 *", dt))
-        
-        dt = datetime.datetime(2025, 7, 1, 0, 0, 0)  # July 1st
-        self.assertTrue(check_cron("0 0 1 */3 *", dt))
-        
-        dt = datetime.datetime(2025, 10, 1, 0, 0, 0)  # October 1st
-        self.assertTrue(check_cron("0 0 1 */3 *", dt))
+        self.assertFalse(check_cron("0 0 1 */3 *", dt))
         
         dt = datetime.datetime(2025, 2, 1, 0, 0, 0)  # February 1st
         self.assertFalse(check_cron("0 0 1 */3 *", dt))
         
-        dt = datetime.datetime(2025, 1, 2, 0, 0, 0)  # January 2nd
+        dt = datetime.datetime(2025, 3, 2, 0, 0, 0)  # March 2nd
         self.assertFalse(check_cron("0 0 1 */3 *", dt))
         
-        dt = datetime.datetime(2025, 1, 1, 1, 0, 0)  # January 1st, wrong hour
+        dt = datetime.datetime(2025, 3, 1, 1, 0, 0)  # March 1st, wrong hour
         self.assertFalse(check_cron("0 0 1 */3 *", dt))
     
     def test_invalid_formats(self):
