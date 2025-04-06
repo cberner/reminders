@@ -98,6 +98,47 @@ class CronTestCase(unittest.TestCase):
         dt = datetime.datetime(2025, 4, 5, 7, 15, 0)
         self.assertFalse(check_cron("15 */6 5 4 *", dt))
     
+    def test_slash_operator_day_of_month(self):
+        dt = datetime.datetime(2025, 4, 5, 0, 0, 0)  # 5th day of month
+        self.assertTrue(check_cron("0 0 */5 * *", dt))
+        
+        dt = datetime.datetime(2025, 4, 10, 0, 0, 0)  # 10th day of month
+        self.assertTrue(check_cron("0 0 */5 * *", dt))
+        
+        dt = datetime.datetime(2025, 4, 15, 0, 0, 0)  # 15th day of month
+        self.assertTrue(check_cron("0 0 */5 * *", dt))
+        
+        dt = datetime.datetime(2025, 4, 7, 0, 0, 0)  # 7th day of month
+        self.assertFalse(check_cron("0 0 */5 * *", dt))
+        
+        dt = datetime.datetime(2025, 4, 5, 1, 0, 0)  # 5th day but wrong hour
+        self.assertFalse(check_cron("0 0 */5 * *", dt))
+    
+    def test_slash_operator_month(self):
+        dt = datetime.datetime(2025, 3, 1, 0, 0, 0)  # March 1st
+        self.assertTrue(check_cron("0 0 1 */3 *", dt))
+        
+        dt = datetime.datetime(2025, 6, 1, 0, 0, 0)  # June 1st
+        self.assertTrue(check_cron("0 0 1 */3 *", dt))
+        
+        dt = datetime.datetime(2025, 9, 1, 0, 0, 0)  # September 1st
+        self.assertTrue(check_cron("0 0 1 */3 *", dt))
+        
+        dt = datetime.datetime(2025, 12, 1, 0, 0, 0)  # December 1st
+        self.assertTrue(check_cron("0 0 1 */3 *", dt))
+        
+        dt = datetime.datetime(2025, 1, 1, 0, 0, 0)  # January 1st
+        self.assertFalse(check_cron("0 0 1 */3 *", dt))
+        
+        dt = datetime.datetime(2025, 2, 1, 0, 0, 0)  # February 1st
+        self.assertFalse(check_cron("0 0 1 */3 *", dt))
+        
+        dt = datetime.datetime(2025, 3, 2, 0, 0, 0)  # March 2nd
+        self.assertFalse(check_cron("0 0 1 */3 *", dt))
+        
+        dt = datetime.datetime(2025, 3, 1, 1, 0, 0)  # March 1st, wrong hour
+        self.assertFalse(check_cron("0 0 1 */3 *", dt))
+    
     def test_invalid_formats(self):
         dt = datetime.datetime(2025, 4, 5, 10, 5, 0)
         

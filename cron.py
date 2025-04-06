@@ -27,10 +27,10 @@ def check_cron(schedule: str, current: datetime.datetime) -> bool:
     if not _check_field(hour, current.hour, 0, 23, enable_slash=True):
         return False
     
-    if not _check_field(day_of_month, current.day, 1, 31):
+    if not _check_field(day_of_month, current.day, 1, 31, enable_slash=True):
         return False
     
-    if not _check_field(month, current.month, 1, 12):
+    if not _check_field(month, current.month, 1, 12, enable_slash=True):
         return False
     
     if day_of_week == '*':
