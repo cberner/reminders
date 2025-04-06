@@ -1,22 +1,32 @@
 import datetime
 import yaml
+import pytz
 from croniter import croniter
 
 
 from cron import check_cron
 
 
-def check_with_croniter(cron_schedule, current_time):
+def check_with_croniter(cron_schedule, current_time, timezone=None):
     """
     Replicates the logic in main.py that uses croniter.get_next() to determine if a reminder should run.
     
     Args:
         cron_schedule: A cron schedule string
         current_time: The datetime to check
+        timezone: Optional timezone string
         
     Returns:
         True if the schedule should run at the given time, False otherwise
     """
+    if timezone:
+        if current_time.tzinfo is not None:
+            current_time = current_time.astimezone(pytz.timezone(timezone))
+        else:
+            current_time = pytz.timezone('UTC').localize(current_time)
+            current_time = current_time.astimezone(pytz.timezone(timezone))
+        current_time = current_time.replace(tzinfo=None)
+        
     normalized_time = current_time.replace(second=0, microsecond=0)
     cron_iter = croniter(cron_schedule, normalized_time - datetime.timedelta(minutes=1))
     next_execution = cron_iter.get_next(datetime.datetime)

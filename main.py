@@ -41,9 +41,10 @@ def email_cloud_function(event, context):
 def process_reminder(event, context):
     if 'cron_schedule' in event:
         cron_schedule = event['cron_schedule']
+        timezone = event.get('timezone')
         event_timestamp = parser.parse(context.timestamp)
         normalized_timestamp = event_timestamp.replace(second=0, microsecond=0)
-        if not check_cron(cron_schedule, normalized_timestamp):
+        if not check_cron(cron_schedule, normalized_timestamp, timezone):
             # for debugging
             # print(f"Skipping {event['subject']}: next execution at {next_execution}. Now: {event_timestamp}")
             return "Skipped"

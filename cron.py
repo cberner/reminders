@@ -1,7 +1,8 @@
 import datetime
+import pytz
 
 
-def check_cron(schedule: str, current: datetime.datetime) -> bool:
+def check_cron(schedule: str, current: datetime.datetime, timezone: str = None) -> bool:
     """
     Check if a cron schedule should run at the given time.
     
@@ -10,6 +11,8 @@ def check_cron(schedule: str, current: datetime.datetime) -> bool:
                  - Each field can be a number, *, comma-separated values (e.g., "1,2,3"), or */n
                  - Day of week field only accepts three-letter abbreviations (e.g., "MON", "TUE") or *
         current: The datetime to check against the schedule
+        timezone: Optional timezone string (e.g., "America/Los_Angeles"). If provided, the current datetime
+                 will be converted to this timezone before checking the schedule.
         
     Returns:
         True if the schedule should run at the given time, False otherwise
@@ -17,6 +20,14 @@ def check_cron(schedule: str, current: datetime.datetime) -> bool:
     Raises:
         ValueError: If the day of week is a number or not a valid three-letter abbreviation
     """
+    if timezone:
+        if current.tzinfo is not None:
+            current = current.astimezone(pytz.timezone(timezone))
+        else:
+            current = pytz.timezone('UTC').localize(current)
+            current = current.astimezone(pytz.timezone(timezone))
+        current = current.replace(tzinfo=None)
+        
     current = current.replace(second=0, microsecond=0)
     parts = schedule.split()
     if len(parts) != 5:

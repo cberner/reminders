@@ -89,7 +89,8 @@ def read_reminders(client: CloudSchedulerClient) -> Job:
                            'to': recipient['to'],
                            'subject': reminder['subject'],
                            'html_content': reminder.get('html_content'),
-                           'cron_schedule': cron}
+                           'cron_schedule': cron,
+                           'timezone': config['timezone']}
                 if extra_schedule:
                     payload['schedule'] = extra_schedule
                 if day_of_week is not None:
