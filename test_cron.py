@@ -168,6 +168,21 @@ class CronTestCase(unittest.TestCase):
         
         dt = datetime.datetime(2025, 4, 5, 10, 0, 0)  # Saturday
         self.assertTrue(check_cron("0 10 5 4 SAT", dt))  # SAT should be accepted
+        
+    def test_comma_separated_days_of_week(self):
+        dt = datetime.datetime(2025, 4, 5, 10, 0, 0)  # Saturday
+        self.assertTrue(check_cron("0 10 5 4 SAT", dt))
+        self.assertTrue(check_cron("0 10 5 4 FRI,SAT,SUN", dt))
+        self.assertFalse(check_cron("0 10 5 4 MON,TUE,WED", dt))
+        
+        dt = datetime.datetime(2025, 4, 7, 10, 0, 0)  # Monday
+        self.assertTrue(check_cron("0 10 7 4 MON", dt))
+        self.assertTrue(check_cron("0 10 7 4 MON,WED,FRI", dt))
+        self.assertFalse(check_cron("0 10 7 4 TUE,THU,SAT", dt))
+        
+        with self.assertRaises(ValueError) as context:
+            check_cron("0 10 7 4 5,MON,FRI", dt)
+        self.assertIn("Day of week must be a three-letter abbreviation", str(context.exception))
 
 
 if __name__ == '__main__':

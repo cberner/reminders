@@ -13,6 +13,9 @@ def check_cron(schedule: str, current: datetime.datetime) -> bool:
         
     Returns:
         True if the schedule should run at the given time, False otherwise
+        
+    Raises:
+        ValueError: If the day of week is a number or not a valid three-letter abbreviation
     """
     current = current.replace(second=0, microsecond=0)
     parts = schedule.split()
@@ -32,61 +35,27 @@ def check_cron(schedule: str, current: datetime.datetime) -> bool:
     
     if not _check_field(month, current.month, 1, 12):
         return False
-    
-    if day_of_week == '*':
-        pass  # Wildcard matches any day
-    elif ',' in day_of_week:
-        days = day_of_week.split(',')
-        match_found = False
-        for day in days:
-            if day == '*':
-                match_found = True
-                break
-            elif day.upper() in ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']:
-                day_map = {
-                    'MON': 0,
-                    'TUE': 1,
-                    'WED': 2,
-                    'THU': 3,
-                    'FRI': 4,
-                    'SAT': 5,
-                    'SUN': 6,
-                }
-                if current.weekday() == day_map[day.upper()]:
-                    match_found = True
-                    break
-            else:
-                try:
-                    int(day)
-                    raise ValueError(f"Day of week must be a three-letter abbreviation (MON, TUE, etc.), not a number: {day}")
-                except ValueError as e:
-                    if "Day of week must be" in str(e):
-                        raise
-                    raise ValueError(f"Invalid day of week: {day}. Must be a three-letter abbreviation (MON, TUE, etc.) or *")
-        if not match_found:
-            return False
-    elif day_of_week.upper() in ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']:
-        day_map = {
-            'MON': 0,
-            'TUE': 1,
-            'WED': 2,
-            'THU': 3,
-            'FRI': 4,
-            'SAT': 5,
-            'SUN': 6,
-        }
-        if current.weekday() != day_map[day_of_week.upper()]:
-            return False
-    else:
-        try:
-            int(day_of_week)
-            raise ValueError(f"Day of week must be a three-letter abbreviation (MON, TUE, etc.), not a number: {day_of_week}")
-        except ValueError as e:
-            if "Day of week must be" in str(e):
-                raise
-            raise ValueError(f"Invalid day of week: {day_of_week}. Must be a three-letter abbreviation (MON, TUE, etc.) or *")
 
-    return True
+    return _check_day_of_week(day_of_week, current.weekday())
+
+
+def _check_day_of_week(schedule: str, current: int) -> bool:
+    if ',' in schedule:
+        for part in schedule.split(','):
+            if _check_day_of_week(part, current):
+                return True
+        return False
+    else:
+        if schedule == '*':
+            return True
+        day_map = {
+            'MON': 0, 'TUE': 1, 'WED': 2, 'THU': 3,
+            'FRI': 4, 'SAT': 5, 'SUN': 6
+        }
+        if schedule.upper() not in day_map:
+            raise ValueError(f"Day of week must be a three-letter abbreviation (MON, TUE, etc.), got: {schedule}")
+
+        return current == day_map[schedule.upper()]
 
 
 def _check_field(field: str, current_value: int, min_value: int, max_value: int) -> bool:
