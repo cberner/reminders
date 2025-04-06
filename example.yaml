@@ -8,3 +8,15 @@ recipients:
         html_content: Details about the thing
         # https://cloud.google.com/scheduler/docs/configuring/cron-job-schedules
         schedule: 0 0 * * *
+      - subject: Reminder 2
+        schedule: 0 5 * * THU
+      - subject: Twice a year
+        schedule: 0 5 1 */6 *
+      - subject: Thrice a year
+        schedule: 0 5 15 */4 *
+      - subject: Every other month
+        schedule: 0 5 15 */4 *
+      - subject: Multiple days of the week
+        schedule: 0 5 * * THU,FRI,SAT,SUN
+      - subject: Multiple days
+        schedule: 0 5 10,15,20,25,27 11 *
