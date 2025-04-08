@@ -184,6 +184,12 @@ class CronTestCase(unittest.TestCase):
             check_cron("0 10 7 4 5,MON,FRI", dt)
         self.assertIn("Day of week must be a three-letter abbreviation", str(context.exception))
 
+    def test_range(self):
+        dt = datetime.datetime(2025, 4, 5, 10, 0, 0)  # Saturday
+        self.assertTrue(check_cron("0 5-15 * * *", dt))
+        self.assertTrue(check_cron("0 0-15 * * *", dt))
+        self.assertFalse(check_cron("0 0-9 * * *", dt))
+
 
 if __name__ == '__main__':
     unittest.main()
