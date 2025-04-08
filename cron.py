@@ -81,7 +81,13 @@ def _check_field(field: str, current_value: int, min_value: int, max_value: int)
             if _check_field(value, current_value, min_value, max_value):
                 return True
         return False
-    
+
+    if '-' in field:
+        start, end = field.split('-')
+        start = int(start)
+        end = int(end)
+        return start <= current_value <= end
+
     if field.startswith('*/'):
         try:
             divisor = int(field[2:])

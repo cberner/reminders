@@ -59,6 +59,9 @@ def process_reminder(event, context):
             # for debugging
             # print(f"Skipping {event['subject']}: Schedule: {cron_schedule}. Now: {normalized_timestamp}")
             return "Skipped"
+        else:
+            # print(f"Sending {event['subject']}: Schedule: {cron_schedule}. Now: {normalized_timestamp}")
+            pass
 
     if 'required_day_of_week' in event:
         if not check_day_of_week(event_date, event['required_day_of_week']):
