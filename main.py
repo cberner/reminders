@@ -2,9 +2,8 @@ import base64
 import datetime
 import json
 import os
+import requests
 from dateutil import parser
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 from cron import check_cron
 
 
@@ -80,15 +79,26 @@ def process_reminder(event, context):
         print('Dropped event {} ({}sec old)'.format(context.event_id, event_age))
         return 'Timeout'
 
-    message = Mail(
-        from_email=event['from'],
-        to_emails=event['to'],
-        subject=event['subject'],
-        html_content=event['html_content'] or ' ')  # SendGrid does not support empty body
-
-    client = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
-    response = client.send(message)
-    if response.status_code != 202:
-        raise Exception("Sending email failed. Status code: {}".format(response.status_code))
+    mailgun_domain = os.environ.get('MAILGUN_DOMAIN')
+    mailgun_api_key = os.environ.get('MAILGUN_API_KEY')
+    
+    if not mailgun_domain or not mailgun_api_key:
+        raise Exception("MAILGUN_DOMAIN and MAILGUN_API_KEY environment variables must be set")
+    
+    data = {
+        'from': event['from'],
+        'to': event['to'],
+        'subject': event['subject'],
+        'html': event['html_content'] or ' '  # Mailgun also doesn't support empty body
+    }
+    
+    response = requests.post(
+        f"https://api.mailgun.net/v3/{mailgun_domain}/messages",
+        auth=("api", mailgun_api_key),
+        data=data
+    )
+    
+    if response.status_code != 200:
+        raise Exception(f"Sending email failed. Status code: {response.status_code}, Response: {response.text}")
 
     return "Done"
