@@ -131,7 +131,6 @@ dmypy.json
 .idea/
 .gcp_credentials.json
 .gcp_project_id
-.sendgrid_key
 .mailgun_key
 reminders.yaml
 virtualenv/

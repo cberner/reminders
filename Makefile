@@ -9,7 +9,6 @@ deploy: test
 	 --trigger-topic reminders-topic \
 	 --project $(shell cat .gcp_project_id) \
 	 --region $(shell cat .gcp_location) \
-	 --set-env-vars SENDGRID_API_KEY="$(shell cat .sendgrid_key)" \
 	 --set-env-vars MAILGUN_API_KEY="$(shell cat .mailgun_key)" \
 	 --set-env-vars MAILGUN_DOMAIN='cberner.com'
 
