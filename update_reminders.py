@@ -9,6 +9,7 @@ from dateutil import parser
 from google.cloud.scheduler_v1 import CloudSchedulerClient
 from google.cloud.scheduler_v1.types import Job, PubsubTarget
 
+from cron import validate_cron
 
 PROJECT = os.environ['GCP_PROJECT']
 REGION = os.environ['GCP_REGION']
@@ -77,7 +78,6 @@ def parse_schedule(schedule: str) -> (str, dict, typing.Optional[int]):
 
 
 def read_reminders(client: CloudSchedulerClient) -> Job:
-    reminder_jobs = {}
     all_payloads = []
     
     with open('reminders.yaml', 'r') as f:
@@ -85,6 +85,8 @@ def read_reminders(client: CloudSchedulerClient) -> Job:
         for recipient in config['recipients']:
             for reminder in recipient['reminders']:
                 cron, extra_schedule, day_of_week = parse_schedule(reminder['schedule'])
+                # Make sure the schedule is valid
+                validate_cron(cron)
                 payload = {'from': config['from'],
                            'to': recipient['to'],
                            'subject': reminder['subject'],

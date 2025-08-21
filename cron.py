@@ -2,6 +2,20 @@ import datetime
 import pytz
 
 
+def validate_cron(schedule: str):
+    parts = schedule.split()
+    if len(parts) != 5:
+        raise ValueError(f"Invalid cron schedule: {schedule}. Expected 5 parts.")
+
+    minute, hour, day_of_month, month, day_of_week = parts
+
+    _check_field(minute, 99, 0, 59)
+    _check_field(hour, 99, 0, 23)
+    _check_field(day_of_month, 99, 1, 31)
+    _check_field(month, 99, 1, 12)
+    _check_day_of_week(day_of_week, 99)
+
+
 def check_cron(schedule: str, current: datetime.datetime) -> bool:
     """
     Check if a cron schedule should run at the given time.
